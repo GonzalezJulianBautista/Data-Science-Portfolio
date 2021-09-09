@@ -1,7 +1,7 @@
 USE PortfolioProject
 
 --1.
---AN罫ISIS POR PA蚐
+--AN脕LISIS POR PA脥S
 --Seleccionamos los datos a utilizar. 
 
 SELECT location, date, new_cases, total_cases,  total_deaths, population
@@ -19,7 +19,7 @@ ORDER BY 1,2
 
 GO
 --3.
---Observamos el porcentaje de poblaci髇 infectada por pa韘, a lo largo del tiempo (Poblaci髇 vs. Casos)
+--Observamos el porcentaje de poblaci贸n infectada por pa铆s, a lo largo del tiempo (Poblaci贸n vs. Casos)
 
 SELECT location, date, total_cases, population, (CONVERT (decimal(10,2),(total_cases/population)*100)) AS infected_population
 FROM tbl_COVID_DEATHS
@@ -28,7 +28,7 @@ ORDER BY 1,2
 
 GO
 --4.
---Observamos el ratio de infecci髇, y los pa韘es con la mayor cuenta. 
+--Observamos el ratio de infecci贸n, y los pa铆ses con la mayor cuenta. 
 
 SELECT location, population, MAX(total_cases) AS Highest_Infection_Count,
 CONVERT(decimal(10,2), MAX(((total_cases/population)*100))) AS Percentage_Population_Infected
@@ -39,7 +39,7 @@ ORDER BY Percentage_Population_Infected  desc
 
 GO
 --5.
---Observamos los pa韘es que presentan la mayor cantidad de fatalidades.  
+--Observamos los pa铆ses que presentan la mayor cantidad de fatalidades.  
 
 SELECT location, MAX(cast(total_deaths as int)) as Death_Count_Per_Country
 From tbl_COVID_DEATHS
@@ -49,7 +49,7 @@ Order By Death_Count_Per_Country desc
 
 GO
 --6.
---AN罫ISIS POR CONTINENTE
+--AN脕LISIS POR CONTINENTE
 --Observamos la cuenta de fatalidades por continente. 
 
 // Highest death count
@@ -63,7 +63,7 @@ Order By Death_Count_Per_Continent desc
 GO
 
 --7.
---Preparaci髇 de vistas. 
+--Preparaci贸n de vistas. 
 
 SELECT date, SUM(New_cases) AS Cases, SUM(CAST (New_Deaths as int)) AS Deaths,
 CONVERT(decimal(10,2), SUM(CAST (New_Deaths as int))/SUM(new_cases)*100) AS Mortality_Rate
@@ -86,7 +86,7 @@ ORDER BY 1,2
 
 GO
 --9.
---Poblaci髇 vs. vacunas (Porcentaje vacunado)
+--Poblaci贸n vs. vacunas (Porcentaje vacunado)
 WITH Population_vs_Vaccines (continent, location, date, population, new_vaccinations, Rolling_Count_People_Vaccinated)
 AS 
 (
@@ -106,7 +106,7 @@ FROM Population_vs_Vaccines
 GO
 
 --10.
---Creaci髇 de views
+--Creaci贸n de views
 
 
 CREATE VIEW Percent_Population_Vaccinated
@@ -125,7 +125,7 @@ group by D.location
 GO
 
 --11. 
---M醩 vistas de valor para exportar y visualizar. 
+--M谩s vistas de valor para exportar y visualizar. 
 
 --Casos, fatalidades y mortalidad global
 
@@ -157,7 +157,7 @@ SELECT * FROM Death_Count_Per_Continent
 
 
 GO
---Porcentaje de la poblaci髇 infectada por pa韘
+--Porcentaje de la poblaci贸n infectada por pa铆s
 
 
 CREATE VIEW Infected_Population_Per_Country
