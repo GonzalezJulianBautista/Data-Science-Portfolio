@@ -1,0 +1,186 @@
+USE PortfolioProject
+
+--1.
+-- SELECT DATA that we're going to be using. 
+
+SELECT location, date, new_cases, total_cases,  total_deaths, population
+FROM tbl_COVID_DEATHS
+ORDER BY 1,2
+
+GO
+--2.
+-- Looking at total cases vs. total deaths (mortality rate)
+
+SELECT location, date, total_cases,total_deaths, (CONVERT (decimal(10,2),(total_deaths/total_cases)*100)) AS Mortality_rt
+FROM tbl_COVID_DEATHS
+where continent is not null
+ORDER BY 1,2
+
+GO
+--3.
+-- Looking at total cases vs population (infected % of population)
+
+SELECT location, date, total_cases, population, (CONVERT (decimal(10,2),(total_cases/population)*100)) AS infected_population
+FROM tbl_COVID_DEATHS
+where continent is not null
+ORDER BY 1,2
+
+GO
+--4.
+-- Looking at countries with highest infection rate (%)
+
+SELECT location, population, MAX(total_cases) AS Highest_Infection_Count,
+CONVERT(decimal(10,2), MAX(((total_cases/population)*100))) AS Percentage_Population_Infected
+FROM tbl_COVID_DEATHS
+where continent is not null
+GROUP BY location, population
+ORDER BY Percentage_Population_Infected  desc
+
+GO
+--5.
+-- Show countries with highest death count per population 
+
+SELECT location, MAX(cast(total_deaths as int)) as Death_Count_Per_Country
+From tbl_COVID_DEATHS
+where continent is not null
+Group by location
+Order By Death_Count_Per_Country desc
+
+GO
+--6.
+-- BREAKING IT DOWN BY CONTINENT // Highest death count
+
+SELECT continent, MAX(cast(total_deaths as int)) as Death_Count_Per_Continent
+From tbl_COVID_DEATHS
+where continent is not null
+Group by continent
+Order By Death_Count_Per_Continent desc
+
+GO
+
+--7.
+-- Prepare for views: GLOBAL NUMBERS
+
+SELECT date, SUM(New_cases) AS Cases, SUM(CAST (New_Deaths as int)) AS Deaths,
+CONVERT(decimal(10,2), SUM(CAST (New_Deaths as int))/SUM(new_cases)*100) AS Mortality_Rate
+FROM tbl_COVID_DEATHS
+where continent is not null
+GROUP BY date
+ORDER BY 1,2
+
+GO
+
+--8.
+-- SUM CASES, SUM DEATHS, DEATH PERCENTAGE
+
+SELECT SUM(New_cases) AS Cases, SUM(CAST (New_Deaths as int)) AS Deaths,
+CONVERT (decimal(10,2), SUM(CAST (New_Deaths as int))/SUM(new_cases)*100) AS Mortality_Rate
+FROM tbl_COVID_DEATHS
+where continent is not null
+--GROUP BY date
+ORDER BY 1,2
+
+GO
+--9.
+--VACCINATIONS: Looking at total population vs. vaccinations (total people in the world vaccinated)
+WITH Population_vs_Vaccines (continent, location, date, population, new_vaccinations, Rolling_Count_People_Vaccinated)
+AS 
+(
+SELECT D.continent, D.location, D.date, D.population, V.new_vaccinations,
+SUM(CONVERT(float, v.new_vaccinations)) 
+OVER (partition by d.Location order by d.location, d.date) AS Rolling_Count_People_Vaccinated
+FROM tbl_COVID_DEATHS AS D
+JOIN tbl_COVID_VACCINATIONS AS V
+ON D.location = V.location
+AND D.date = V.date
+WHERE D.continent IS NOT NULL
+--ORDER BY d.location, d.date
+)
+SELECT *, CONVERT (decimal(10,2),(Rolling_Count_People_Vaccinated/population)*100) AS Percentage__Population_Vaccinated
+FROM Population_vs_Vaccines
+
+
+GO
+
+--10.
+-- CREATING A VIEW: Future Visualizations
+
+
+CREATE VIEW Percent_Population_Vaccinated
+AS
+SELECT D.continent, D.location, D.date, D.population, V.new_vaccinations,
+SUM(CONVERT(float, v.new_vaccinations)) 
+OVER (partition by d.Location order by d.location, d.date) AS Rolling_Count_People_Vaccinated
+FROM tbl_COVID_DEATHS AS D
+JOIN tbl_COVID_VACCINATIONS AS V
+ON D.location = V.location
+AND D.date = V.date
+WHERE D.continent IS NOT NULL
+group by D.location
+--ORDER BY d.location, d.date
+
+GO
+
+--11.
+-- OUR VIEW!
+SELECT * FROM Percent_Population_Vaccinated
+
+GO
+
+--12. 
+-- Creating multiple views for working on Tableau
+
+-- VIEW No.1: Cases, Deaths and Mortality Rate globally
+
+CREATE VIEW Mortality_Rate_Global
+AS
+SELECT SUM(New_cases) AS Cases, SUM(CAST (New_Deaths as int)) AS Deaths,
+CONVERT (decimal(10,2), SUM(CAST (New_Deaths as int))/SUM(new_cases)*100) AS Mortality_Rate_Global
+FROM tbl_COVID_DEATHS
+where continent is not null
+--GROUP BY date
+--ORDER BY 1,2
+
+GO
+
+SELECT * FROM Mortality_Rate_Global
+
+GO
+
+-- VIEW No.2: Death count, by continent
+
+CREATE VIEW Death_Count_Per_Continent
+AS
+SELECT continent, MAX(cast(total_deaths as int)) as Death_Count_Per_Continent
+From tbl_COVID_DEATHS
+where continent is not null
+Group by continent
+--Order By Death_Count_Per_Continent desc
+
+GO
+
+SELECT * FROM Death_Count_Per_Continent
+
+
+GO
+-- VIEW No.3: Percentage of population infected by country
+
+
+CREATE VIEW Infected_Population_Per_Country
+AS
+SELECT location, population, MAX(total_cases) AS Highest_Infection_Count,
+CONVERT(decimal(10,2), MAX(((total_cases/population)*100))) AS Percentage_Population_Infected
+FROM tbl_COVID_DEATHS
+where continent is not null
+GROUP BY location, population
+--ORDER BY Percentage_Population_Infected  desc
+
+GO
+
+SELECT * FROM Infected_Population_Per_Country
+
+-- MORE VIEWS!
+SELECT * FROM Percent_Population_Vaccinated
+SELECT * FROM Mortality_Rate_Global
+SELECT * FROM Death_Count_Per_Continent
+SELECT * FROM Infected_Population_Per_Country
